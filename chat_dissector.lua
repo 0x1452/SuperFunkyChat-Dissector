@@ -278,7 +278,7 @@ local debug_pref_enum = {
 -- register our preferences
 chat_proto.prefs.enabled = Pref.bool(
     "Dissector enabled", default_settings.enabled,
-    "Whether the FPM dissector is enabled or not"
+    "Whether the SuperFunkyChat dissector is enabled or not"
 )
 
 chat_proto.prefs.port = Pref.range(
