@@ -18,7 +18,7 @@ local dprint2 = function() end
 local function resetDebugLevel()
     if default_settings.debug_level > debug_level.DISABLED then
         dprint = function(...)
-            info(table.concat({"Lua: ", ...}," "))
+            print(table.concat({"Lua: ", ...}," "))
         end
 
         if default_settings.debug_level > debug_level.LEVEL_1 then
@@ -77,7 +77,7 @@ dprint2("chat_proto ProtoFields registered")
 ----------------------------------------------------------
 
 -- minimum message size we need to be able to figure out how long the rest is
---  8 because the `BINX` magic value gets sent on `CON_REQUEST` messages
+--  8 because of the `BINX` magic value that gets sent on `CON_REQUEST` messages
 local CHAT_MSG_HDR_LEN = 8
 
 local dissectChat, checkChatLength
@@ -104,7 +104,7 @@ function chat_proto.dissector(buffer, pinfo, tree)
         elseif result == 0 then
             return 0
         else
-            -- set `desegment_offset` to what we already consumed
+            -- set `desegment_offset` to how many bytes we already consumed
             pinfo.desegment_offset = bytes_consumed
 
             -- invert the negative result
@@ -152,24 +152,24 @@ checkChatLength = function(buffer, offset)
     local length_str = length_tvbr:string()
 
     -- `length` only contains the length of the `type`+`data` portions
-    local length_extra = 8
+    local length_header = 8
 
     -- if the string `BINX` is contained in the first four bytes
-    --  move `length_tvbr` by 4 bytes and add 4 to `length_extra` 
+    --  move `length_tvbr` by 4 bytes and add 4 to `length_header` 
     local i, j = string.find(length_str, "BINX")
     if (i) then
         length_tvbr = buffer:range(offset + 4, 4)
-        length_extra = length_extra + 4
+        length_header = length_header + 4
     end
 
     length_val = length_tvbr:uint()
 
-    if msglen < length_val + length_extra then
+    if msglen < length_val + length_header then
         dprint2("Need more bytes to desegment full Chat message")
-        return -(length_val - msglen + length_extra)
+        return -(length_val - msglen + length_header)
     end
 
-    return length_val + length_extra, length_tvbr
+    return length_val + length_header, length_tvbr
 end
 
 -- Dissector function
@@ -219,7 +219,6 @@ dissectChat = function(buffer, pinfo, tree, offset)
     subtree:add(chat_fields.command, command_tvbr)
 
     -- dissect the data field
-
     local data = buffer(9):tvb()
     local datatree = subtree:add(chat_fields.data, data())
 
@@ -302,7 +301,20 @@ function chat_proto.prefs_changed()
     default_settings.debug_level = chat_proto.prefs.debug
     resetDebugLevel()
 
-    default_settings.port = chat_proto.prefs.port
+    if default_settings.port ~= chat_proto.prefs.port then
+        -- remove old port, if not 0
+        if default_settings.port ~= 0 then
+            dprint2("Removing CHAT from old port", default_settings.port)
+            DissectorTable.get("tcp.port"):remove(default_settings.port, chat_proto)
+        end
+        -- set new port
+        default_settings.port = chat_proto.prefs.port
+        -- add new port, if not 0
+        if default_settings.port ~= 0 then
+            dprint2("Adding CHAT to new port", default_settings.port)
+            DissectorTable.get("tcp.port"):add(default_settings.port, chat_proto)
+        end
+    end
 
     if default_settings.enabled ~= chat_proto.prefs.enabled then
         default_settings.enabled = chat_proto.prefs.enabled
