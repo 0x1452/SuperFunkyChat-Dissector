@@ -28,13 +28,3 @@ It can also be loaded by adding it to your plugins directory. Check the [officia
 
 ## Screenshot
 ![Screenshot of the Wireshark application capturing SuperFunkyChat packets. A response to the 'list' command is highlighted, which contains a list of connected users.](/img/dissector.png?raw=true "Dissector")
-
-## TODO
-
-- [ ] Add data subtrees for the following commands:
-  - [ ] `CON_REQUEST` (0)
-  - [ ] `CON_EXIT` (2)
-  - [x] `MSG` (3)
-  - [ ] `DIRECT_MSG` (5)
-  - [x] `LIST_RESPONSE` (7)
-- [ ] Support both UDP and TCP
