@@ -27,7 +27,7 @@ wireshark -X lua_script:/path/to/chat-dissector.lua
 It can also be loaded by adding it to your plugins directory. Check the [official documentation](https://www.wireshark.org/docs/wsdg_html_chunked/wsluarm.html) on Lua support for more information.
 
 ## Screenshot
-![Screenshot of the Wireshark application capturing SuperFunkyChat packets. A reponse to the 'list' command is highlighted, which contains a list of connected users.](/img/dissector.png?raw=true "Dissector")
+![Screenshot of the Wireshark application capturing SuperFunkyChat packets. A response to the 'list' command is highlighted, which contains a list of connected users.](/img/dissector.png?raw=true "Dissector")
 
 ## TODO
 
