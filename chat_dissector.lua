@@ -219,21 +219,48 @@ dissectChat = function(buffer, pinfo, tree, offset)
     subtree:add(chat_fields.command, command_tvbr)
 
     -- dissect the data field
-    local data = buffer(9):tvb()
+    local data = buffer(inner_offset + 9):tvb()
     local datatree = subtree:add(chat_fields.data, data())
 
-    if command_val == command_type.MSG then
-        local curr_ofs = 0
+    local curr_ofs = 0
+    if command_val == command_type.CON_REQUEST then
         local str, len = read_string(data, curr_ofs)
         datatree:add(chat_proto, data(curr_ofs, len), "Username: " .. str)
-
         curr_ofs = curr_ofs + len
+
+        str, len = read_string(data, curr_ofs)
+        datatree:add(chat_proto, data(curr_ofs, len), "Hostname: " .. str)
+
+    elseif command_val == command_type.CON_EXIT then
+        local str, len = read_string(data, curr_ofs)
+        datatree:add(chat_proto, data(curr_ofs, len), "Message: " .. str)
+
+    elseif command_val == command_type.MSG then
+        local str, len = read_string(data, curr_ofs)
+        datatree:add(chat_proto, data(curr_ofs, len), "Username: " .. str)
+        curr_ofs = curr_ofs + len
+
         str, len = read_string(data, curr_ofs)
         datatree:add(chat_proto, data(curr_ofs, len), "Message: " .. str)
-    end
 
-    if command_val == command_type.LIST_RESPONSE then
-        local curr_ofs = 0
+    elseif command_val == command_type.DIRECT_MSG then
+        local str, len = read_string(data, curr_ofs)
+        datatree:add(chat_proto, data(curr_ofs, len), "To: " .. str)
+        curr_ofs = curr_ofs + len
+
+        local unknown = data(curr_ofs, 4):uint()
+        datatree:add(chat_proto, data(curr_ofs, 4), "Command?: " .. unknown)
+        curr_ofs = curr_ofs + 4
+
+        str, len = read_string(data, curr_ofs)
+        datatree:add(chat_proto, data(curr_ofs, len), "From: " .. str)
+        curr_ofs = curr_ofs + len
+
+        str, len = read_string(data, curr_ofs)
+        datatree:add(chat_proto, data(curr_ofs, len), "Message: " .. str)
+        curr_ofs = curr_ofs + len
+
+    elseif command_val == command_type.LIST_RESPONSE then
         local user_count = data(curr_ofs, 4):uint()
         datatree:add(chat_proto, data(curr_ofs, 4), "User Count: " .. user_count)
         curr_ofs = curr_ofs + 4
